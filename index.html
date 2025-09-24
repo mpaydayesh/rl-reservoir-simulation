@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RL-Optimized Reservoir Development</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .visualization-panel {
+            flex: 2;
+            min-width: 600px;
+        }
+        .control-panel {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            display: block;
+        }
+        .chart-container {
+            margin-top: 20px;
+            position: relative;
+        }
+        .production-chart-container {
+            height: 350px; /* Increased height for production chart */
+        }
+        .other-chart-container {
+            height: 250px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .stats {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .stat-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .stat-label {
+            font-weight: 600;
+            color: #555;
+        }
+        .stat-value {
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .info-box {
+            background-color: #e8f4fc;
+            border-left: 4px solid #3498db;
+            padding: 10px 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #f1f1f1';
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RL-Optimized Reservoir Development</h1>
+        <p class="subtitle">Using Reinforcement Learning to Maximize Net Present Value</p>
+        
+        <div class="content">
+            <div class="visualization-panel">
+                <canvas id="reservoirCanvas" width="800" height="500"></canvas>
+                
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('production')">Production Profile</div>
+                    <div class="tab" onclick="switchTab('npv')">NPV Over Time</div>
+                    <div class="tab" onclick="switchTab('learning')">Learning Progress</div>
+                </div>
+                
+                <div class="tab-content active" id="production-tab">
+                    <div class="chart-container production-chart-container">
+                        <canvas id="productionChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="npv-tab">
+                    <div class="chart-container other-chart-container">
+                        <canvas id="npvChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="learning-tab">
+                    <div class="chart-container other-chart-container">
+                        <canvas id="learningChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="controls">
+                    <h3>Simulation Controls</h3>
+                    
+                    <div class="control-group">
+                        <button id="startBtn" onclick="startSimulation()">Start Simulation</button>
+                        <button id="pauseBtn" onclick="pauseSimulation()" disabled>Pause</button>
+                        <button id="resetBtn" onclick="resetSimulation()">Reset</button>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="speedSlider">Simulation Speed: <span id="speedValue">1</span>x</label>
+                        <input type="range" id="speedSlider" min="0.5" max="5" step="0.5" value="1" onchange="updateSpeed(this.value)">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="wellsSlider">Number of Wells: <span id="wellsValue">10</span></label>
+                        <input type="range" id="wellsSlider" min="5" max="20" step="1" value="10" onchange="updateWells(this.value)">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="discountRateSlider">Discount Rate: <span id="discountRateValue">10</span>%</label>
+                        <input type="range" id="discountRateSlider" min="5" max="20" step="1" value="10" onchange="updateDiscountRate(this.value)">
+                    </div>
+                </div>
+                
+                <div class="stats">
+                    <h3>Simulation Statistics</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Current Year:</span>
+                        <span class="stat-value" id="currentYear">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Wells Drilled:</span>
+                        <span class="stat-value" id="wellsDrilled">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Cumulative Production:</span>
+                        <span class="stat-value" id="cumulativeProduction">0</span> Mbbl
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Current Production Rate:</span>
+                        <span class="stat-value" id="currentProductionRate">0</span> Mbbl/year
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Net Present Value:</span>
+                        <span class="stat-value" id="npv">$0</span> M
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">RL Episodes:</span>
+                        <span class="stat-value" id="episodes">0</span>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <p>This simulation demonstrates how reinforcement learning optimizes reservoir development by determining the optimal well placement, drilling sequence, and production profiles to maximize NPV over the field's lifetime.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let canvas, ctx, productionCanvas, productionCtx, npvCanvas, npvCtx, learningCanvas, learningCtx;
+        let simulationRunning = false;
+        let animationId = null;
+        let simulationSpeed = 1;
+        let numWells = 10;
+        let discountRate = 0.1;
+        let currentYear = 0;
+        let maxYears = 30;
+        let wells = [];
+        let productionHistory = [];
+        let npvHistory = [];
+        let learningHistory = [];
+        let rlEpisodes = 0;
+        let currentEpisode = 0;
+        let episodeRewards = [];
+        let bestNpv = 0;
+        let bestStrategy = null;
+        
+        // Reservoir properties
+        const reservoirWidth = 700;
+        const reservoirHeight = 400;
+        const reservoirX = 50;
+        const reservoirY = 50;
+        const wellCost = 5; // Million dollars
+        const oilPrice = 60; // Dollars per barrel
+        const operatingCostPerWell = 0.5; // Million dollars per year
+        
+        // RL Agent properties
+        let qTable = {};
+        let epsilon = 0.3; // Exploration rate
+        let learningRate = 0.1;
+        let discountFactor = 0.9;
+        
+        // Initialize the simulation
+        function init() {
+            canvas = document.getElementById('reservoirCanvas');
+            ctx = canvas.getContext('2d');
+            
+            productionCanvas = document.getElementById('productionChart');
+            productionCtx = productionCanvas.getContext('2d');
+            productionCanvas.width = productionCanvas.offsetWidth;
+            productionCanvas.height = 350; // Set explicit height for production chart
+            
+            npvCanvas = document.getElementById('npvChart');
+            npvCtx = npvCanvas.getContext('2d');
+            npvCanvas.width = npvCanvas.offsetWidth;
+            npvCanvas.height = 250;
+            
+            learningCanvas = document.getElementById('learningChart');
+            learningCtx = learningCanvas.getContext('2d');
+            learningCanvas.width = learningCanvas.offsetWidth;
+            learningCanvas.height = 250;
+            
+            resetSimulation();
+        }
+        
+        // Reset the simulation
+        function resetSimulation() {
+            simulationRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            currentYear = 0;
+            wells = [];
+            productionHistory = [];
+            npvHistory = [];
+            episodeRewards = [];
+            currentEpisode = 0;
+            
+            // Initialize wells with random positions
+            for (let i = 0; i < numWells; i++) {
+                wells.push({
+                    id: i,
+                    x: reservoirX + Math.random() * reservoirWidth,
+                    y: reservoirY + Math.random() * reservoirHeight,
+                    drilled: false,
+                    active: false,
+                    productionRate: 0,
+                    cumulativeProduction: 0,
+                    productivity: Math.random() * 0.8 + 0.2, // 0.2 to 1.0
+                    drillYear: -1
+                });
+            }
+            
+            // Sort wells by productivity (highest first) - this is a heuristic the RL will learn to improve
+            wells.sort((a, b) => b.productivity - a.productivity);
+            
+            updateStats();
+            drawReservoir();
+            drawCharts();
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+        }
+        
+        // Start the simulation
+        function startSimulation() {
+            if (!simulationRunning) {
+                simulationRunning = true;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('pauseBtn').disabled = false;
+                animate();
+            }
+        }
+        
+        // Pause the simulation
+        function pauseSimulation() {
+            simulationRunning = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+        
+        // Update simulation speed
+        function updateSpeed(value) {
+            simulationSpeed = parseFloat(value);
+            document.getElementById('speedValue').textContent = value;
+        }
+        
+        // Update number of wells
+        function updateWells(value) {
+            numWells = parseInt(value);
+            document.getElementById('wellsValue').textContent = value;
+            resetSimulation();
+        }
+        
+        // Update discount rate
+        function updateDiscountRate(value) {
+            discountRate = parseInt(value) / 100;
+            document.getElementById('discountRateValue').textContent = value;
+            resetSimulation();
+        }
+        
+        // Switch between tabs
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+        
+        // Get state for RL agent
+        function getState() {
+            // Simplified state representation
+            const drilledWells = wells.filter(w => w.drilled).length;
+            const activeWells = wells.filter(w => w.active).length;
+            const currentProduction = wells.reduce((sum, w) => sum + w.productionRate, 0);
+            const yearsRemaining = maxYears - currentYear;
+            
+            return {
+                drilledWells,
+                activeWells,
+                currentProduction,
+                yearsRemaining,
+                budgetRemaining: getBudgetRemaining()
+            };
+        }
+        
+        // Get available actions
+        function getAvailableActions(state) {
+            const actions = [];
+            
+            // Action 0: Do nothing
+            actions.push(0);
+            
+            // Actions for drilling each undrilled well
+            wells.forEach((well, index) => {
+                if (!well.drilled && canDrillWell(well)) {
+                    actions.push(index + 1); // Action 1-N for drilling wells
+                }
+            });
+            
+            return actions;
+        }
+        
+        // Check if we can drill a well (budget constraint)
+        function canDrillWell(well) {
+            return getBudgetRemaining() >= wellCost;
+        }
+        
+        // Get remaining budget
+        function getBudgetRemaining() {
+            // Simplified budget model
+            const initialBudget = numWells * wellCost * 1.5; // 50% contingency
+            const spent = wells.filter(w => w.drilled).length * wellCost;
+            return initialBudget - spent;
+        }
+        
+        // Get Q-value for state-action pair
+        function getQValue(state, action) {
+            const stateKey = JSON.stringify(state);
+            if (!qTable[stateKey]) {
+                qTable[stateKey] = {};
+            }
+            if (!qTable[stateKey][action]) {
+                qTable[stateKey][action] = 0;
+            }
+            return qTable[stateKey][action];
+        }
+        
+        // Set Q-value for state-action pair
+        function setQValue(state, action, value) {
+            const stateKey = JSON.stringify(state);
+            if (!qTable[stateKey]) {
+                qTable[stateKey] = {};
+            }
+            qTable[stateKey][action] = value;
+        }
+        
+        // Choose action using epsilon-greedy policy
+        function chooseAction(state, availableActions) {
+            if (Math.random() < epsilon) {
+                // Exploration: random action
+                return availableActions[Math.floor(Math.random() * availableActions.length)];
+            } else {
+                // Exploitation: best action according to Q-values
+                let bestAction = availableActions[0];
+                let bestValue = getQValue(state, bestAction);
+                
+                for (const action of availableActions) {
+                    const value = getQValue(state, action);
+                    if (value > bestValue) {
+                        bestValue = value;
+                        bestAction = action;
+                    }
+                }
+                
+                return bestAction;
+            }
+        }
+        
+        // Execute action and return reward
+        function executeAction(action) {
+            let reward = 0;
+            
+            if (action === 0) {
+                // Do nothing
+                reward = 0;
+            } else {
+                // Drill a well
+                const wellIndex = action - 1;
+                if (wellIndex >= 0 && wellIndex < wells.length && !wells[wellIndex].drilled) {
+                    wells[wellIndex].drilled = true;
+                    wells[wellIndex].active = true;
+                    wells[wellIndex].drillYear = currentYear;
+                    
+                    // Reward based on well productivity and timing
+                    reward = wells[wellIndex].productivity * 10 * (1 - currentYear / maxYears);
+                }
+            }
+            
+            return reward;
+        }
+        
+        // Update Q-table
+        function updateQTable(state, action, reward, nextState) {
+            const currentQ = getQValue(state, action);
+            
+            // Get max Q-value for next state
+            const nextActions = getAvailableActions(nextState);
+            let maxNextQ = 0;
+            if (nextActions.length > 0) {
+                maxNextQ = Math.max(...nextActions.map(a => getQValue(nextState, a)));
+            }
+            
+            // Q-learning update
+            const newQ = currentQ + learningRate * (reward + discountFactor * maxNextQ - currentQ);
+            setQValue(state, action, newQ);
+        }
+        
+        // Simulate one time step (year)
+        function simulateTimeStep() {
+            if (currentYear >= maxYears) {
+                // End of simulation, start new episode
+                endEpisode();
+                return;
+            }
+            
+            // Get current state
+            const state = getState();
+            
+            // Get available actions
+            const availableActions = getAvailableActions(state);
+            
+            // Choose action
+            const action = chooseAction(state, availableActions);
+            
+            // Execute action and get reward
+            const reward = executeAction(action);
+            episodeRewards.push(reward);
+            
+            // Get next state
+            const nextState = getState();
+            
+            // Update Q-table
+            updateQTable(state, action, reward, nextState);
+            
+            // Update production
+            updateProduction();
+            
+            // Calculate NPV
+            const npv = calculateNPV();
+            npvHistory.push(npv);
+            
+            // Increment year
+            currentYear++;
+            
+            // Update statistics and visualization
+            updateStats();
+            drawReservoir();
+            drawCharts();
+        }
+        
+        // Update production for all wells
+        function updateProduction() {
+            let totalProduction = 0;
+            
+            wells.forEach(well => {
+                if (well.active) {
+                    // Production declines over time (exponential decline)
+                    const yearsActive = currentYear - well.drillYear;
+                    const declineRate = 0.1; // 10% per year
+                    well.productionRate = well.productivity * 2 * Math.exp(-declineRate * yearsActive);
+                    
+                    // Well depletes after certain production
+                    well.cumulativeProduction += well.productionRate;
+                    if (well.cumulativeProduction > well.productivity * 20 || well.productionRate < 0.1) {
+                        well.active = false;
+                        well.productionRate = 0;
+                    }
+                    
+                    totalProduction += well.productionRate;
+                }
+            });
+            
+            productionHistory.push(totalProduction);
+        }
+        
+        // Calculate Net Present Value
+        function calculateNPV() {
+            let npv = 0;
+            
+            // Subtract drilling costs
+            wells.forEach(well => {
+                if (well.drilled) {
+                    const yearsSinceDrilling = currentYear - well.drillYear;
+                    if (yearsSinceDrilling >= 0) {
+                        npv -= wellCost / Math.pow(1 + discountRate, yearsSinceDrilling);
+                    }
+                }
+            });
+            
+            // Add revenue from production
+            for (let year = 0; year <= currentYear; year++) {
+                if (year < productionHistory.length) {
+                    const revenue = productionHistory[year] * oilPrice / 1000; // Convert to million dollars
+                    const operatingCosts = wells.filter(w => w.drilled && w.drillYear <= year && 
+                        (year - w.drillYear) < (w.cumulativeProduction / w.productivity) / 2).length * operatingCostPerWell;
+                    const cashFlow = revenue - operatingCosts;
+                    npv += cashFlow / Math.pow(1 + discountRate, year);
+                }
+            }
+            
+            return npv;
+        }
+        
+        // End current episode and start new one
+        function endEpisode() {
+            currentEpisode++;
+            rlEpisodes++;
+            
+            // Calculate total reward for episode
+            const totalReward = episodeRewards.reduce((sum, reward) => sum + reward, 0);
+            
+            // Update best strategy if this episode is better
+            const currentNpv = npvHistory[npvHistory.length - 1] || 0;
+            if (currentNpv > bestNpv) {
+                bestNpv = currentNpv;
+                bestStrategy = JSON.parse(JSON.stringify(wells));
+            }
+            
+            // Record learning progress
+            learningHistory.push({
+                episode: currentEpisode,
+                npv: currentNpv,
+                reward: totalReward
+            });
+            
+            // Decay epsilon
+            epsilon = Math.max(0.05, epsilon * 0.99);
+            
+            // Reset for new episode
+            currentYear = 0;
+            wells = [];
+            productionHistory = [];
+            npvHistory = [];
+            episodeRewards = [];
+            
+            // Reinitialize wells
+            for (let i = 0; i < numWells; i++) {
+                wells.push({
+                    id: i,
+                    x: reservoirX + Math.random() * reservoirWidth,
+                    y: reservoirY + Math.random() * reservoirHeight,
+                    drilled: false,
+                    active: false,
+                    productionRate: 0,
+                    cumulativeProduction: 0,
+                    productivity: Math.random() * 0.8 + 0.2,
+                    drillYear: -1
+                });
+            }
+            
+            // Sort wells by productivity (this is a heuristic the RL will learn to improve)
+            wells.sort((a, b) => b.productivity - a.productivity);
+            
+            updateStats();
+            drawReservoir();
+            drawCharts();
+        }
+        
+        // Update statistics display
+        function updateStats() {
+            document.getElementById('currentYear').textContent = currentYear;
+            document.getElementById('wellsDrilled').textContent = wells.filter(w => w.drilled).length;
+            
+            const cumulativeProduction = productionHistory.reduce((sum, p) => sum + p, 0);
+            document.getElementById('cumulativeProduction').textContent = cumulativeProduction.toFixed(1);
+            
+            const currentProductionRate = productionHistory.length > 0 ? 
+                productionHistory[productionHistory.length - 1] : 0;
+            document.getElementById('currentProductionRate').textContent = currentProductionRate.toFixed(1);
+            
+            const currentNpv = npvHistory.length > 0 ? npvHistory[npvHistory.length - 1] : 0;
+            document.getElementById('npv').textContent = `$${currentNpv.toFixed(1)}`;
+            
+            document.getElementById('episodes').textContent = rlEpisodes;
+        }
+        
+        // Draw reservoir and wells
+        function drawReservoir() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw reservoir background
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(reservoirX, reservoirY, reservoirWidth, reservoirHeight);
+            
+            // Draw high productivity zones
+            ctx.fillStyle = 'rgba(243, 156, 18, 0.2)';
+            for (let i = 0; i < 3; i++) {
+                const centerX = reservoirX + Math.random() * reservoirWidth;
+                const centerY = reservoirY + Math.random() * reservoirHeight;
+                const radius = 50 + Math.random() * 50;
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw wells
+            wells.forEach(well => {
+                ctx.beginPath();
+                ctx.arc(well.x, well.y, 8, 0, Math.PI * 2);
+                
+                if (well.drilled) {
+                    if (well.active) {
+                        ctx.fillStyle = '#2ecc71'; // Active well
+                    } else {
+                        ctx.fillStyle = '#e74c3c'; // Depleted well
+                    }
+                } else {
+                    ctx.fillStyle = '#3498db'; // Undrilled well
+                }
+                
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Draw well ID
+                ctx.fillStyle = '#333';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(well.id, well.x, well.y + 20);
+            });
+            
+            // Draw title
+            ctx.fillStyle = '#333';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Reservoir Field Development', canvas.width / 2, 30);
+            
+            // Draw year indicator
+            ctx.font = '14px Arial';
+            ctx.fillText(`Year: ${currentYear} / ${maxYears}`, canvas.width / 2, canvas.height - 20);
+            
+            // Draw legend for well states
+            drawReservoirLegend();
+        }
+        
+        // Draw legend for reservoir chart
+        function drawReservoirLegend() {
+            const legendX = canvas.width - 200;
+            const legendY = 50;
+            const legendWidth = 180;
+            const legendHeight = 120;
+            const itemHeight = 25;
+            
+            // Draw legend background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(legendX, legendY, legendWidth, legendHeight, 5);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw legend title
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Well States', legendX + legendWidth/2, legendY + 20);
+            
+            // Draw legend items
+            const items = [
+                { color: '#3498db', label: 'Undrilled Well' },
+                { color: '#2ecc71', label: 'Active Well' },
+                { color: '#e74c3c', label: 'Depleted Well' },
+                { color: '#f39c12', label: 'High Productive Zone' }
+            ];
+            
+            ctx.font = '13px Arial';
+            ctx.textAlign = 'left';
+            
+            items.forEach((item, index) => {
+                const y = legendY + 35 + index * itemHeight;
+                
+                // Draw color circle
+                ctx.fillStyle = item.color;
+                ctx.beginPath();
+                ctx.arc(legendX + 15, y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw label
+                ctx.fillStyle = '#333';
+                ctx.fillText(item.label, legendX + 30, y - 6);
+            });
+        }
+        
+        // Draw charts
+        function drawCharts() {
+            drawProductionChart();
+            drawNpvChart();
+            drawLearningChart();
+        }
+        
+        // Draw production chart
+        function drawProductionChart() {
+            productionCtx.clearRect(0, 0, productionCanvas.width, productionCanvas.height);
+            
+            if (productionHistory.length === 0) return;
+            
+            const padding = 60; // Increased padding for better label visibility
+            const chartWidth = productionCanvas.width - 2 * padding;
+            const chartHeight = productionCanvas.height - 2 * padding;
+            
+            // Draw axes
+            productionCtx.strokeStyle = '#333';
+            productionCtx.lineWidth = 1;
+            productionCtx.beginPath();
+            productionCtx.moveTo(padding, padding);
+            productionCtx.lineTo(padding, productionCanvas.height - padding);
+            productionCtx.lineTo(productionCanvas.width - padding, productionCanvas.height - padding);
+            productionCtx.stroke();
+            
+            // Draw title
+            productionCtx.fillStyle = '#333';
+            productionCtx.font = '16px Arial';
+            productionCtx.textAlign = 'center';
+            productionCtx.fillText('Production Profile', productionCanvas.width / 2, 25);
+            
+            // Find max production for scaling
+            const maxProduction = Math.max(...productionHistory, 1);
+            
+            // Draw production curve
+            productionCtx.strokeStyle = '#3498db';
+            productionCtx.lineWidth = 3; // Thicker line for better visibility
+            productionCtx.beginPath();
+            
+            productionHistory.forEach((production, i) => {
+                const x = padding + (i / maxYears) * chartWidth;
+                const y = productionCanvas.height - padding - (production / maxProduction) * chartHeight;
+                
+                if (i === 0) {
+                    productionCtx.moveTo(x, y);
+                } else {
+                    productionCtx.lineTo(x, y);
+                }
+            });
+            
+            productionCtx.stroke();
+            
+            // Draw axis labels
+            productionCtx.fillStyle = '#333';
+            productionCtx.font = '14px Arial';
+            productionCtx.textAlign = 'center';
+            productionCtx.fillText('Years', productionCanvas.width / 2, productionCanvas.height - 15);
+            
+            // Draw y-axis label with more space
+            productionCtx.save();
+            productionCtx.translate(20, productionCanvas.height / 2); // Increased from 10 to 20
+            productionCtx.rotate(-Math.PI / 2);
+            productionCtx.font = '14px Arial';
+            productionCtx.fillText('Production (Mbbl/year)', 0, 0);
+            productionCtx.restore();
+            
+            // Draw y-axis values with better spacing
+            productionCtx.font = '12px Arial';
+            productionCtx.textAlign = 'right';
+            productionCtx.textBaseline = 'middle';
+            
+            // Draw 5 labels with proper spacing
+            for (let i = 0; i <= 5; i++) {
+                const value = (i / 5) * maxProduction;
+                const y = productionCanvas.height - padding - (i / 5) * chartHeight;
+                productionCtx.fillText(value.toFixed(1), padding - 10, y);
+                
+                // Draw grid lines for better readability
+                productionCtx.strokeStyle = '#e0e0e0';
+                productionCtx.lineWidth = 0.5;
+                productionCtx.beginPath();
+                productionCtx.moveTo(padding, y);
+                productionCtx.lineTo(productionCanvas.width - padding, y);
+                productionCtx.stroke();
+            }
+            
+            // Draw x-axis values
+            productionCtx.textAlign = 'center';
+            productionCtx.textBaseline = 'top';
+            for (let i = 0; i <= maxYears; i += 5) {
+                const x = padding + (i / maxYears) * chartWidth;
+                productionCtx.fillText(i.toString(), x, productionCanvas.height - padding + 10);
+            }
+        }
+        
+        // Draw NPV chart
+        function drawNpvChart() {
+            npvCtx.clearRect(0, 0, npvCanvas.width, npvCanvas.height);
+            
+            if (npvHistory.length === 0) return;
+            
+            const padding = 40;
+            const chartWidth = npvCanvas.width - 2 * padding;
+            const chartHeight = npvCanvas.height - 2 * padding;
+            
+            // Draw axes
+            npvCtx.strokeStyle = '#333';
+            npvCtx.lineWidth = 1;
+            npvCtx.beginPath();
+            npvCtx.moveTo(padding, padding);
+            npvCtx.lineTo(padding, npvCanvas.height - padding);
+            npvCtx.lineTo(npvCanvas.width - padding, npvCanvas.height - padding);
+            npvCtx.stroke();
+            
+            // Draw title
+            npvCtx.fillStyle = '#333';
+            npvCtx.font = '14px Arial';
+            npvCtx.textAlign = 'center';
+            npvCtx.fillText('Net Present Value Over Time', npvCanvas.width / 2, 20);
+            
+            // Find min and max NPV for scaling
+            const minNpv = Math.min(0, ...npvHistory);
+            const maxNpv = Math.max(0, ...npvHistory);
+            const range = maxNpv - minNpv || 1;
+            
+            // Draw NPV curve
+            npvCtx.strokeStyle = '#2ecc71';
+            npvCtx.lineWidth = 2;
+            npvCtx.beginPath();
+            
+            npvHistory.forEach((npv, i) => {
+                const x = padding + (i / maxYears) * chartWidth;
+                const y = npvCanvas.height - padding - ((npv - minNpv) / range) * chartHeight;
+                
+                if (i === 0) {
+                    npvCtx.moveTo(x, y);
+                } else {
+                    npvCtx.lineTo(x, y);
+                }
+            });
+            
+            npvCtx.stroke();
+            
+            // Draw zero line
+            if (minNpv < 0 && maxNpv > 0) {
+                npvCtx.strokeStyle = '#e74c3c';
+                npvCtx.lineWidth = 1;
+                npvCtx.setLineDash([5, 3]);
+                npvCtx.beginPath();
+                const zeroY = npvCanvas.height - padding - ((0 - minNpv) / range) * chartHeight;
+                npvCtx.moveTo(padding, zeroY);
+                npvCtx.lineTo(npvCanvas.width - padding, zeroY);
+                npvCtx.stroke();
+                npvCtx.setLineDash([]);
+            }
+            
+            // Draw axis labels
+            npvCtx.fillStyle = '#333';
+            npvCtx.font = '12px Arial';
+            npvCtx.textAlign = 'center';
+            npvCtx.fillText('Years', npvCanvas.width / 2, npvCanvas.height - 10);
+            
+            npvCtx.save();
+            npvCtx.translate(15, npvCanvas.height / 2);
+            npvCtx.rotate(-Math.PI / 2);
+            npvCtx.fillText('NPV ($M)', 0, 0);
+            npvCtx.restore();
+            
+            // Draw axis values
+            npvCtx.textAlign = 'right';
+            npvCtx.textBaseline = 'middle';
+            for (let i = 0; i <= 5; i++) {
+                const value = minNpv + (i / 5) * range;
+                const y = npvCanvas.height - padding - (i / 5) * chartHeight;
+                npvCtx.fillText(value.toFixed(1), padding - 5, y);
+            }
+            
+            npvCtx.textAlign = 'center';
+            npvCtx.textBaseline = 'top';
+            for (let i = 0; i <= maxYears; i += 5) {
+                const x = padding + (i / maxYears) * chartWidth;
+                npvCtx.fillText(i.toString(), x, npvCanvas.height - padding + 5);
+            }
+        }
+        
+        // Draw learning chart
+        function drawLearningChart() {
+            learningCtx.clearRect(0, 0, learningCanvas.width, learningCanvas.height);
+            
+            if (learningHistory.length === 0) return;
+            
+            const padding = 40;
+            const chartWidth = learningCanvas.width - 2 * padding;
+            const chartHeight = learningCanvas.height - 2 * padding;
+            
+            // Draw axes
+            learningCtx.strokeStyle = '#333';
+            learningCtx.lineWidth = 1;
+            learningCtx.beginPath();
+            learningCtx.moveTo(padding, padding);
+            learningCtx.lineTo(padding, learningCanvas.height - padding);
+            learningCtx.lineTo(learningCanvas.width - padding, learningCanvas.height - padding);
+            learningCtx.stroke();
+            
+            // Draw title
+            learningCtx.fillStyle = '#333';
+            learningCtx.font = '14px Arial';
+            learningCtx.textAlign = 'center';
+            learningCtx.fillText('RL Learning Progress', learningCanvas.width / 2, 20);
+            
+            // Find min and max values for scaling
+            const minNpv = Math.min(...learningHistory.map(h => h.npv));
+            const maxNpv = Math.max(...learningHistory.map(h => h.npv));
+            const minReward = Math.min(...learningHistory.map(h => h.reward));
+            const maxReward = Math.max(...learningHistory.map(h => h.reward));
+            
+            // Draw NPV curve
+            learningCtx.strokeStyle = '#2ecc71';
+            learningCtx.lineWidth = 2;
+            learningCtx.beginPath();
+            
+            learningHistory.forEach((data, i) => {
+                const x = padding + (i / Math.max(learningHistory.length - 1, 1)) * chartWidth;
+                const y = learningCanvas.height - padding - ((data.npv - minNpv) / (maxNpv - minNpv || 1)) * chartHeight;
+                
+                if (i === 0) {
+                    learningCtx.moveTo(x, y);
+                } else {
+                    learningCtx.lineTo(x, y);
+                }
+            });
+            
+            learningCtx.stroke();
+            
+            // Draw reward curve
+            learningCtx.strokeStyle = '#9b59b6';
+            learningCtx.lineWidth = 2;
+            learningCtx.beginPath();
+            
+            learningHistory.forEach((data, i) => {
+                const x = padding + (i / Math.max(learningHistory.length - 1, 1)) * chartWidth;
+                const y = learningCanvas.height - padding - ((data.reward - minReward) / (maxReward - minReward || 1)) * chartHeight;
+                
+                if (i === 0) {
+                    learningCtx.moveTo(x, y);
+                } else {
+                    learningCtx.lineTo(x, y);
+                }
+            });
+            
+            learningCtx.stroke();
+            
+            // Draw legend
+            learningCtx.fillStyle = '#2ecc71';
+            learningCtx.fillRect(learningCanvas.width - 150, 30, 15, 15);
+            learningCtx.fillStyle = '#333';
+            learningCtx.font = '12px Arial';
+            learningCtx.textAlign = 'left';
+            learningCtx.fillText('NPV', learningCanvas.width - 130, 42);
+            
+            learningCtx.fillStyle = '#9b59b6';
+            learningCtx.fillRect(learningCanvas.width - 150, 50, 15, 15);
+            learningCtx.fillStyle = '#333';
+            learningCtx.fillText('Episode Reward', learningCanvas.width - 130, 62);
+            
+            // Draw axis labels
+            learningCtx.fillStyle = '#333';
+            learningCtx.font = '12px Arial';
+            learningCtx.textAlign = 'center';
+            learningCtx.fillText('Episodes', learningCanvas.width / 2, learningCanvas.height - 10);
+            
+            learningCtx.save();
+            learningCtx.translate(15, learningCanvas.height / 2);
+            learningCtx.rotate(-Math.PI / 2);
+            learningCtx.fillText('Value', 0, 0);
+            learningCtx.restore();
+            
+            // Draw axis values
+            learningCtx.textAlign = 'right';
+            learningCtx.textBaseline = 'middle';
+            for (let i = 0; i <= 5; i++) {
+                const npvValue = minNpv + (i / 5) * (maxNpv - minNpv);
+                const y = learningCanvas.height - padding - (i / 5) * chartHeight;
+                learningCtx.fillText(npvValue.toFixed(1), padding - 5, y);
+            }
+            
+            learningCtx.textAlign = 'center';
+            learningCtx.textBaseline = 'top';
+            const maxEpisodes = Math.max(10, learningHistory.length);
+            for (let i = 0; i <= maxEpisodes; i += Math.ceil(maxEpisodes / 5)) {
+                const x = padding + (i / maxEpisodes) * chartWidth;
+                learningCtx.fillText(i.toString(), x, learningCanvas.height - padding + 5);
+            }
+        }
+        
+        // Animation loop
+        let lastTime = 0;
+        const timePerStep = 1000; // 1 second per simulation step
+        
+        function animate(timestamp) {
+            if (!simulationRunning) return;
+            
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = timestamp - lastTime;
+            
+            if (deltaTime >= timePerStep / simulationSpeed) {
+                simulateTimeStep();
+                lastTime = timestamp;
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // Initialize when page loads
+        window.onload = init;
+    </script>
+</body>
+</html>
